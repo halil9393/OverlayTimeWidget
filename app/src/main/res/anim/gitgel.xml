@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set android:ordering="sequentially"
+    android:interpolator="@android:anim/linear_interpolator"
+    android:fillAfter="true"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="-10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="0"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="750"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="-10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="1500"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="2250"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="-10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="3000"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="3750"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="-10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="4500"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="10%p"
+        android:fillAfter="false"
+        android:duration="750"
+        android:startOffset="5250"></translate>
+    <translate
+        android:fromYDelta="0%p"
+        android:toYDelta="-10%p"
+        android:fillAfter="true"
+        android:duration="750"
+        android:startOffset="6000"></translate>
+<!--    <translate-->
+<!--        android:fromYDelta="0%p"-->
+<!--        android:toYDelta="10%p"-->
+<!--        android:fillAfter="false"-->
+<!--        android:duration="750"-->
+<!--        android:startOffset="6750"></translate>-->
+
+
+
+
+
+
+<!--    <alpha-->
+<!--        android:fromAlpha="1"-->
+<!--        android:toAlpha="0.0"-->
+<!--        android:interpolator="@android:anim/accelerate_interpolator"-->
+<!--        android:duration="100"-->
+<!--        ></alpha>-->
+<!--    <alpha-->
+<!--        android:fromAlpha="0"-->
+<!--        android:toAlpha="0.0"-->
+<!--        android:interpolator="@android:anim/accelerate_interpolator"-->
+<!--        android:duration="100"-->
+<!--        ></alpha>-->
+<!--    <alpha-->
+<!--        android:fromAlpha="1"-->
+<!--        android:toAlpha="0.0"-->
+<!--        android:interpolator="@android:anim/accelerate_interpolator"-->
+<!--        android:duration="100"-->
+<!--        ></alpha>-->
+
+</set>
