@@ -2,6 +2,7 @@ package com.example.OverlayTimeWidget;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
@@ -13,10 +14,12 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +33,16 @@ public class WidgetService extends Service {
 
     int LAYOUT_FLAG;
     View mFloatingView;
-    WindowManager windowManager;
+    static WindowManager windowManager;
     ImageView imageClose;
     TextView text_widget;
 
-    Handler handler1 = new Handler();
-    Handler handler2 = new Handler();
-    Handler handler3 = new Handler();
+    static Handler handler1 = new Handler();
+    static Handler handler2 = new Handler();
+    static Handler handler3 = new Handler();
+
+
+
     int oncekiKonumX, oncekiKonumY, sonKonumX, sonKonumY;
 
     float dX = 0, dY = 0;
@@ -46,16 +52,43 @@ public class WidgetService extends Service {
     int DX, DY, DX2, DY2;
     float frenKatsayisi;
 
+    public static boolean kontrolet2(View view1, View view2) {
+        //kapatma iconu ile yakınlık yada çakışma kontrolü
+
+        WindowManager.LayoutParams layoutParams1 = (WindowManager.LayoutParams) view1.getLayoutParams();
+        WindowManager.LayoutParams layoutParams2 = (WindowManager.LayoutParams) view2.getLayoutParams();
+
+        Log.i("tag_get", "view1 x :" + layoutParams1.x + " view1 Y:" + layoutParams1.y);
+        Log.i("tag_get", "view2 X :" + layoutParams2.y + " view2 Y:" + layoutParams2.y);
+
+        boolean sonuc = false;
+
+        if (Math.abs((layoutParams1.x + layoutParams1.width / 2) - (layoutParams2.x + layoutParams2.width / 2)) <= (layoutParams1.width / 2 + layoutParams2.width / 2)
+                && Math.abs((layoutParams1.y + layoutParams1.height/ 2) - (layoutParams2.y + layoutParams2.height / 2)) <= (layoutParams1.height / 2 + layoutParams2.height / 2)) {
+            sonuc = true;
+        }
+
+        Log.i("tag_kontrolet2","layoutx:"+layoutParams1.x+" "+layoutParams1.width+" "+layoutParams1.height);
+        Log.i("tag_kontrolet2","getx:"+view1.getX()+" "+view1.getWidth()+" "+view1.getHeight());
+
+        return sonuc;
+
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////
 
     @SuppressLint({"ClickableViewAccessibility", "ResourceAsColor", "InflateParams"})
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        handler1 = new Handler();
+        handler2 = new Handler();
+        handler3 = new Handler();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LAYOUT_FLAG = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -72,6 +105,7 @@ public class WidgetService extends Service {
         // inflate float widget
         mFloatingView = LayoutInflater.from(this).inflate(R.layout.layout_widget, null);
         mFloatingView.setVisibility(View.VISIBLE);
+
 
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -104,6 +138,14 @@ public class WidgetService extends Service {
 
         windowManager.addView(imageClose, imageParams);
         windowManager.addView(mFloatingView, layoutParams);
+        Log.i("tag_params","layoutprams.width:"+layoutParams.width);
+
+        Handler handler8 = new Handler();// layoutparams başta wrap content verildiğinde -2 değeri kalıyor. onu değiştirmek gerekiyor metotların doğru çalışması için
+        handler8.postDelayed(() -> {
+            layoutParams.width =mFloatingView.getWidth();
+            layoutParams.height = mFloatingView.getHeight();
+            Log.i("tag_tamam","getwidth:"+mFloatingView.getWidth()+" params.width:"+layoutParams.width);
+        },1000);
 
 
         text_widget = mFloatingView.findViewById(R.id.text_widget);
@@ -125,6 +167,11 @@ public class WidgetService extends Service {
 
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
+
+                    handler1.removeCallbacksAndMessages(null);
+                    handler2.removeCallbacksAndMessages(null);
+                    handler3.removeCallbacksAndMessages(null);
+
                     startClickTime = Calendar.getInstance().getTimeInMillis();
                     imageClose.setVisibility(View.VISIBLE);
 
@@ -141,7 +188,7 @@ public class WidgetService extends Service {
                 case MotionEvent.ACTION_MOVE:
 
                     // view bırakılmadan önceki en yakın konumunu bulmak ve eğim hesaplamak için...
-                    handler2.removeCallbacksAndMessages(null);
+
                     handler2.postDelayed(new Runnable() {
                         @Override
                         public void run() {
@@ -160,7 +207,7 @@ public class WidgetService extends Service {
                     windowManager.updateViewLayout(mFloatingView, layoutParams);
 
                     // kapatma iconuna yakınlaştığında yapılacak işlemler, animasyonlar...
-                    if (kontrolet(layoutParams, imageParams)) {
+                    if (kontrolet2(mFloatingView, imageClose)) {
                         imageClose.setBackgroundColor(R.color.purple_200);
                     } else {
                         imageClose.setBackgroundColor(R.color.black);
@@ -181,10 +228,15 @@ public class WidgetService extends Service {
                         Toast.makeText(this, "time:" + text_widget.getText().toString(), Toast.LENGTH_SHORT).show();
                     } else {
 
-                        if (kontrolet(layoutParams, imageParams)) stopSelf();   //remove widget
-                        else {
+                        if (kontrolet2(mFloatingView, imageClose)) {
+                            handler1.removeCallbacksAndMessages(null);
+                            handler2.removeCallbacksAndMessages(null);
+                            handler3.removeCallbacksAndMessages(null);
+                            stopSelf();   //remove widget
+                        } else {
                             firlatmaBaslat(layoutParams);
                         }
+
                     }
                     return true;
             }
@@ -193,18 +245,6 @@ public class WidgetService extends Service {
         });
 
         return START_STICKY;
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public boolean kontrolet(WindowManager.@NotNull LayoutParams layoutParams, WindowManager.@NotNull LayoutParams imageParams) {
-        //kapatma iconu ile yakınlık yada çakışma kontrolü
-        boolean sonuc = false;
-        if (Math.abs((layoutParams.x + mFloatingView.getWidth() / 2) - (imageParams.x + imageClose.getWidth() / 2)) <= (mFloatingView.getWidth() / 2 + imageClose.getWidth() / 2)
-                && Math.abs((layoutParams.y + mFloatingView.getHeight() / 2) - (imageParams.y + imageClose.getHeight() / 2)) <= (mFloatingView.getHeight() / 2 + imageClose.getHeight() / 2)) {
-            sonuc = true;
-        }
-        return sonuc;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,10 +257,10 @@ public class WidgetService extends Service {
         DY2 = DY;
         frenKatsayisi = 1;
         int maxPixel = 150;
-        if(DX2<-maxPixel) DX2 = -maxPixel;     // max hızı belirlemek için hareket pixel cinsinden sınırlandırıldı
-        else if(DX2>maxPixel) DX2 = maxPixel;
-        if(DY2<-maxPixel) DY2 = -maxPixel;
-        else if(DY2>maxPixel) DY2 = maxPixel;
+        if (DX2 < -maxPixel) DX2 = -maxPixel;     // max hızı belirlemek için hareket pixel cinsinden sınırlandırıldı
+        else if (DX2 > maxPixel) DX2 = maxPixel;
+        if (DY2 < -maxPixel) DY2 = -maxPixel;
+        else if (DY2 > maxPixel) DY2 = maxPixel;
 
         Log.i("tag_slope", "DX: " + DX + " DY: " + DY);
 
@@ -251,8 +291,8 @@ public class WidgetService extends Service {
 
                 if ((DX < 0 && DX2 > 0 || DX > 0 && DX2 < 0) && (DY < 0 && DY2 > 0 || DY > 0 && DY2 < 0)) {
                     handler3.removeCallbacksAndMessages(null);
-                    Log.i("tag_slope", "egim durdu,en yakın kenar hesaplanacak..");
-                    enYakinKenar(layoutParams);
+                    Log.i("tag_slope", "firlatma egimi durdu,en yakın kenar hesaplanacak..");
+                    enYakinKenar(mFloatingView,widthOfScreen,heightOfScreen);
                 } else {
                     handler3.postDelayed(this, 16);
                 }
@@ -264,76 +304,80 @@ public class WidgetService extends Service {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void enYakinKenar(WindowManager.LayoutParams layoutParams) {
+    public static  void enYakinKenar(@NotNull View view, int widthOfScreen, int heightOfScreen) {
         // hareket sıfırlandığında, en yakın kenara hareket etmesini sağlar
-        int[] mesafeler = kenarMesafeleriHesapla(layoutParams);
+        WindowManager.LayoutParams layoutParams = (WindowManager.LayoutParams) view.getLayoutParams();
+        int[] mesafeler = kenarMesafeleriHesapla2(view,widthOfScreen,heightOfScreen);
         if (Math.abs(mesafeler[0]) <= Math.abs(mesafeler[1])) {
-            animasyon(layoutParams, "X", mesafeler[0]);
+            animasyon2(view, "X", mesafeler[0],widthOfScreen,heightOfScreen);
         } else {
-            animasyon(layoutParams, "Y", mesafeler[1]);
+            animasyon2(view, "Y", mesafeler[1],widthOfScreen,heightOfScreen);
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public int[] kenarMesafeleriHesapla(WindowManager.@NotNull LayoutParams layoutParams) {
+    public static int[] kenarMesafeleriHesapla2(@NotNull View view, int widthOfScreen, int heightOfScreen) {
         // kenarlara olan mesafeler kıyaslanıp, en yakın kenara olan uzaklık hesaplamak için
-        int[] liste = new int[2];
-        int xMesafesi, yMesafesi;
 
+        int xMesafesi, yMesafesi;
+        WindowManager.LayoutParams layoutParams = (WindowManager.LayoutParams) view.getLayoutParams();
+
+        // Kenarlardan dışarı çıktığı takdirde kenara sıfır hizalmak için...
         if (layoutParams.x < 0) {
             layoutParams.x = 0;
-        } else if (layoutParams.x + mFloatingView.getWidth() > widthOfScreen) {
-            layoutParams.x = widthOfScreen - mFloatingView.getWidth();
+        } else if (layoutParams.x + layoutParams.width > widthOfScreen) {
+            layoutParams.x = widthOfScreen - layoutParams.width;
         }
 
         if (layoutParams.y < 0) {
             layoutParams.y = 0;
-        } else if (layoutParams.y + mFloatingView.getHeight() > heightOfScreen) {
-            layoutParams.y = heightOfScreen - mFloatingView.getHeight();
+        } else if (layoutParams.y + layoutParams.height > heightOfScreen) {
+            layoutParams.y = heightOfScreen - layoutParams.height;
         }
 
-        int xMerkez = mFloatingView.getWidth() / 2 + layoutParams.x;
-        int yMerkez = mFloatingView.getHeight() / 2 + layoutParams.y;
+        // Calculate paddings from edges...
+        int xMerkez = layoutParams.width / 2 + layoutParams.x;
+        int yMerkez = layoutParams.height / 2 + layoutParams.y;
 
         if (xMerkez <= widthOfScreen / 2) {
             xMesafesi = -layoutParams.x;
         } else {
-            xMesafesi = widthOfScreen - layoutParams.x - mFloatingView.getWidth();
+            xMesafesi = widthOfScreen - layoutParams.x - layoutParams.width;
+            Log.i("tag_view","viewgetwidth:"+layoutParams.width);
         }
 
-        if (yMerkez <= heightOfScreen/2) {
+        if (yMerkez <= heightOfScreen / 2) {
             yMesafesi = -layoutParams.y;
         } else {
-            yMesafesi = heightOfScreen - layoutParams.y - mFloatingView.getHeight();
+            yMesafesi = heightOfScreen - layoutParams.y - layoutParams.height;
         }
-
-        liste[0] = xMesafesi;
-        liste[1] = yMesafesi;
 
         Log.i("tag_mesafeler", "xMesafesi: " + xMesafesi + " yMesafesi: " + yMesafesi);
 
-        return liste;
+        return new int[] {xMesafesi,yMesafesi};
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void animasyon(WindowManager.LayoutParams layoutParams, @NotNull String yon, int mesafe) {
-        // en yakın kenara hareket ettirmek için
+    public static void animasyon2(@NotNull View view, @NotNull String yon, int mesafe, int widthOfScreen, int heightOfScreen) {
+        // en yakın kenara hareket ettirmek, yanastirmak için
+        WindowManager.LayoutParams layoutParams = (WindowManager.LayoutParams) view.getLayoutParams();
         if (yon.equals("X") && mesafe != 0) {
             handler1.removeCallbacksAndMessages(null);
             handler1.postDelayed(new Runnable() {
                 @Override
                 public void run() {
 
+                    Log.i("tag_handler","handler çalıştı layoutparamsx :"+layoutParams.x);
                     if (mesafe > 0) layoutParams.x = layoutParams.x + 10;
                     else layoutParams.x = layoutParams.x - 10;
 
-                    windowManager.updateViewLayout(mFloatingView, layoutParams);
+                    windowManager.updateViewLayout(view, layoutParams);
 
-                    if (layoutParams.x <= 0 || layoutParams.x >= widthOfScreen - mFloatingView.getWidth()) {
+                    if (layoutParams.x <= 0 || layoutParams.x >= widthOfScreen - layoutParams.width) {
                         handler1.removeCallbacksAndMessages(null);
-                        kenarSifirlama(layoutParams);
+                        kenarSifirlama(view,widthOfScreen,heightOfScreen);
                     } else {
                         handler1.postDelayed(this, 16);
                     }
@@ -349,11 +393,11 @@ public class WidgetService extends Service {
                     if (mesafe > 0) layoutParams.y = layoutParams.y + 10;
                     else layoutParams.y = layoutParams.y - 10;
 
-                    windowManager.updateViewLayout(mFloatingView, layoutParams);
+                    windowManager.updateViewLayout(view, layoutParams);
 
-                    if (layoutParams.y <= 0 || layoutParams.y >= heightOfScreen - mFloatingView.getHeight()) {
+                    if (layoutParams.y <= 0 || layoutParams.y >= heightOfScreen - layoutParams.height) {
                         handler1.removeCallbacksAndMessages(null);
-                        kenarSifirlama(layoutParams);
+                        kenarSifirlama(view,widthOfScreen,heightOfScreen);
                     } else {
                         handler1.postDelayed(this, 16);
                     }
@@ -361,26 +405,29 @@ public class WidgetService extends Service {
                 }
             }, 10);
 
-        }else kenarSifirlama(layoutParams);
+        } else kenarSifirlama(view,widthOfScreen,heightOfScreen);
 
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void kenarSifirlama(@org.jetbrains.annotations.NotNull WindowManager.LayoutParams layoutParams) {
+    public static void kenarSifirlama(@NotNull View view, int widthOfScreen, int heightOfScreen){
         // kenarlardan taşma var mı kontrol edilecek, kenarlar ekrana sıfırlanacak
+        WindowManager.LayoutParams layoutParams = (WindowManager.LayoutParams) view.getLayoutParams();
+
         if (layoutParams.x < 0) {
             layoutParams.x = 0;
-        } else if (layoutParams.x + mFloatingView.getWidth() > widthOfScreen) {
-            layoutParams.x = widthOfScreen - mFloatingView.getWidth();
+        } else if (layoutParams.x + layoutParams.width > widthOfScreen) {
+            layoutParams.x = widthOfScreen - layoutParams.width;
         }
 
         if (layoutParams.y < 0) {
             layoutParams.y = 0;
-        } else if (layoutParams.y + mFloatingView.getHeight() > heightOfScreen) {
-            layoutParams.y = heightOfScreen - mFloatingView.getHeight();
+        } else if (layoutParams.y + layoutParams.height > heightOfScreen) {
+            layoutParams.y = heightOfScreen - layoutParams.height;
         }
-        windowManager.updateViewLayout(mFloatingView, layoutParams);
+
+        windowManager.updateViewLayout(view, layoutParams);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
